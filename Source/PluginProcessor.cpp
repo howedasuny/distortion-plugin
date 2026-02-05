@@ -134,6 +134,8 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
+    auto numChannels = buffer.getNumChannels();
+    auto numSamples = buffer.getNumSamples();
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -150,11 +152,21 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    for (int channel = 0; channel < numChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
+        
+        for (int i = 0; i < numSamples; ++i) {
+            
+            auto x = channelData[i];
+            
+            x *= drive;
+            
+            channelData[i] = std::tanh(x);
+            
+        }
 
-        // ..do something to the data...
+        
     }
 }
 

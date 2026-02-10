@@ -19,7 +19,8 @@ Distortion_pluginAudioProcessor::Distortion_pluginAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), 
+                       apvts(*this, nullptr, "PARAMETERS", createParameters())
 #endif
 {
 }
@@ -129,6 +130,51 @@ bool Distortion_pluginAudioProcessor::isBusesLayoutSupported (const BusesLayout&
 }
 #endif
 
+juce::AudioProcessorValueTreeState::ParameterLayout
+Distortion_pluginAudioProcessor::createParameters()
+{
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "drive",
+        "Drive",
+        juce::NormalisableRange<float>(0.0f, 24.0f, 0.01f),
+        6.0f));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "mix",
+        "Mix",
+        0.0f,
+        1.0f,
+        1.0f));
+
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(
+        "distType",
+        "Distortion Type",
+        juce::StringArray{"Tanh", "Soft Clip", "Hard Clip"},
+        0));
+
+    return { params.begin(), params.end() };
+}
+
+float Distortion_pluginAudioProcessor::processDistortion(float x, DistortionType type)
+{
+    switch (type)
+    {
+    case DistortionType::tanh:
+        return std::tanh(x);
+
+    case DistortionType::softClip:
+        return x / (1.0f + std::abs(x));
+
+    case DistortionType::hardClip:
+        return juce::jlimit(-1.0f, 1.0f, x);
+
+    default:
+        return x;
+    }
+}
+
 void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -136,6 +182,15 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     auto numChannels = buffer.getNumChannels();
     auto numSamples = buffer.getNumSamples();
+    
+    float driveDb = *apvts.getRawParameterValue("drive");
+    float driveGain = juce::Decibels::decibelsToGain(driveDb);
+    
+    float mix = *apvts.getRawParameterValue("mix");
+
+    auto distType = static_cast<DistortionType>((int)*apvts.getRawParameterValue("distType"));
+
+
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -160,9 +215,14 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
             
             auto x = channelData[i];
             
-            x *= drive;
+            x *= driveGain;
             
-            channelData[i] = std::tanh(x);
+            x = processDistortion(x, distType);
+            
+            float outputGain = 1.0f / driveGain;
+            
+            channelData[i] = x * outputGain;
+
             
         }
 
@@ -187,12 +247,23 @@ void Distortion_pluginAudioProcessor::getStateInformation (juce::MemoryBlock& de
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+
+    auto state = apvts.copyState();
+    std::unique_ptr<juce::XmlElement> xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
+
 }
 
 void Distortion_pluginAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+
+    std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
+
+    if (xml && xml->hasTagName(apvts.state.getType()))
+        apvts.replaceState(juce::ValueTree::fromXml(*xml));
+
 }
 
 //==============================================================================

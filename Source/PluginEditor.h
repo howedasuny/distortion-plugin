@@ -29,7 +29,11 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     Distortion_pluginAudioProcessor& audioProcessor;
-    juce::Slider Volume;
+    juce::Slider driveSlider;
+    juce::ComboBox distTypeBox;
+    
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> distAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Distortion_pluginAudioProcessorEditor)
 };

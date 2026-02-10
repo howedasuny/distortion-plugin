@@ -54,11 +54,23 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
+    juce::AudioProcessorValueTreeState apvts;
+    
+    static juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
+    
+    //==============================================================================
+    enum class DistortionType
+    {
+        tanh = 0,
+        softClip,
+        hardClip,
+    };
+    
+    float processDistortion(float x, DistortionType type);
+
     float audioVolume;
 
 private:
-
-    float drive = 2.0f;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Distortion_pluginAudioProcessor)

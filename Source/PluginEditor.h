@@ -30,9 +30,11 @@ private:
     // access the processor object that created it.
     Distortion_pluginAudioProcessor& audioProcessor;
     juce::Slider driveSlider;
+    juce::Slider mixSlider;
     juce::ComboBox distTypeBox;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> distAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Distortion_pluginAudioProcessorEditor)

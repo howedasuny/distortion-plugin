@@ -23,6 +23,13 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
     driveSlider.setTextValueSuffix ("Drive");
     driveSlider.setValue (1.0);
     
+    mixSlider.setSliderStyle (juce::Slider::LinearBarVertical);
+    mixSlider.setRange (0.0, 1.0, 0.01f);
+    mixSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
+    mixSlider.setPopupDisplayEnabled (true, false, this);
+    mixSlider.setTextValueSuffix ("Mix");
+    mixSlider.setValue (1.0);
+    
     distTypeBox.addItem("Tanh", 1);
     distTypeBox.addItem("Soft Clip", 2);
     distTypeBox.addItem("Hard Clip", 3);
@@ -30,12 +37,18 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
     
     // add the components to the editor
     addAndMakeVisible(&driveSlider);
+    addAndMakeVisible(&mixSlider);
     addAndMakeVisible(&distTypeBox);
     
     driveAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
         audioProcessor.apvts,
         "drive",
         driveSlider);
+
+    mixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        audioProcessor.apvts,
+        "mix",
+        mixSlider);
 
     distAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
         audioProcessor.apvts,
@@ -66,6 +79,7 @@ void Distortion_pluginAudioProcessorEditor::resized()
     // subcomponents in your editor..
     
     driveSlider.setBounds(40, 30, 20, getHeight() - 60);
+    mixSlider.setBounds(100, 30, 20, getHeight() - 60);
     
     distTypeBox.setBounds(300, 50, 100, 50);
     

@@ -216,20 +216,18 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         
         for (int i = 0; i < numSamples; ++i) {
             
-            auto x = channelData[i];
+            auto drySignal = channelData[i];
+            auto wetSignal = drySignal;
             
-            x *= driveGain;
-            
-            x = processDistortion(x, distType);
+            wetSignal *= driveGain;
+            wetSignal = processDistortion(wetSignal, distType);
             
             float outputGain = 1.0f / driveGain;
+            wetSignal *= outputGain;
             
-            channelData[i] = x * outputGain;
-
-            
+            // Mix dry and wet signals based on mix parameter (0 = dry, 1 = wet)
+            channelData[i] = drySignal * (1.0f - mix) + wetSignal * mix;
         }
-
-        
     }
 }
 

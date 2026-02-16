@@ -151,7 +151,7 @@ Distortion_pluginAudioProcessor::createParameters()
     params.push_back(std::make_unique<juce::AudioParameterChoice>(
         "distType",
         "Distortion Type",
-        juce::StringArray{"Tanh", "Soft Clip", "Hard Clip"},
+        juce::StringArray{"Tanh", "Soft Clip", "Hard Clip", "Cubic"},
         0));
 
     return { params.begin(), params.end() };
@@ -169,6 +169,9 @@ float Distortion_pluginAudioProcessor::processDistortion(float x, DistortionType
 
     case DistortionType::hardClip:
         return juce::jlimit(-1.0f, 1.0f, x);
+        
+    case DistortionType::cubic:
+        return x * x * x;
 
     default:
         return x;

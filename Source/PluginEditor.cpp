@@ -26,6 +26,7 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
     distTypeBox.addItem("Tanh", 1);
     distTypeBox.addItem("Soft Clip", 2);
     distTypeBox.addItem("Hard Clip", 3);
+    distTypeBox.addItem("Cubic", 4);
     
     // add the components to the editor
     addAndMakeVisible(&driveSlider);
@@ -66,6 +67,6 @@ void Distortion_pluginAudioProcessorEditor::resized()
     
     driveSlider.setBounds(40, 30, 20, getHeight() - 60);
     
-    distTypeBox.setBounds(200, 50, 20, getHeight() - 60);
+    distTypeBox.setBounds(300, 50, 100, 50);
     
 }

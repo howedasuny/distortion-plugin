@@ -64,6 +64,7 @@ public:
         tanh = 0,
         softClip,
         hardClip,
+        cubic,
     };
     
     float processDistortion(float x, DistortionType type);

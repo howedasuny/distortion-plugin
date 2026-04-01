@@ -96,6 +96,23 @@ void Distortion_pluginAudioProcessor::prepareToPlay (double sampleRate, int samp
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = 1;  // Prepare each filter individually
+    
+    processSpec = spec;
+    for (auto& f : filters)
+        f.prepare(spec);
+    
+    currentSampleRate = sampleRate;
+    // initialize coefficients with current APVTS values
+    float filterFreq = *apvts.getRawParameterValue("filterFreq");
+    float filterRes = *apvts.getRawParameterValue("filterRes");
+    auto filterType = static_cast<FilterType>((int)*apvts.getRawParameterValue("filterType"));
+    auto filterState = static_cast<FilterState>((int)*apvts.getRawParameterValue("filterState"));
+    updateFilterCoefficients(filterFreq, filterRes, filterType, filterState);
 }
 
 void Distortion_pluginAudioProcessor::releaseResources()
@@ -154,6 +171,31 @@ Distortion_pluginAudioProcessor::createParameters()
         juce::StringArray{"Tanh", "Soft Clip", "Hard Clip", "Cubic"},
         0));
 
+    // Filter parameters
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(
+        "filterState",
+        "Filter State",
+        juce::StringArray{"Off", "Pre-Distortion", "Post-Distortion"},
+        0));
+
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(
+        "filterType",
+        "Filter Type",
+        juce::StringArray{"Lowpass", "Highpass"},
+        0));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "filterFreq",
+        "Filter Frequency",
+        juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.3f),
+        1000.0f));
+
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "filterRes",
+        "Filter Resonance",
+        juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f),
+        1.0f));
+
     return { params.begin(), params.end() };
 }
 
@@ -190,44 +232,96 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     float driveGain = juce::Decibels::decibelsToGain(driveDb);
     
     float mix = *apvts.getRawParameterValue("mix");
-
     auto distType = static_cast<DistortionType>((int)*apvts.getRawParameterValue("distType"));
+    
+    // Filter parameters
+    auto filterState = static_cast<FilterState>((int)*apvts.getRawParameterValue("filterState"));
+    auto filterType = static_cast<FilterType>((int)*apvts.getRawParameterValue("filterType"));
+    float filterFreq = *apvts.getRawParameterValue("filterFreq");
+    float filterRes = *apvts.getRawParameterValue("filterRes");
+    
+    // Update filter coefficients only when parameter/state changed
+    bool stateChanged = (filterState != prevFilterState);
+    
+    if (!coefficientsInitialized
+        || filterFreq != prevFilterFreq
+        || filterRes != prevFilterRes
+        || filterType != prevFilterType
+        || stateChanged)
+    {
+        updateFilterCoefficients(filterFreq, filterRes, filterType, filterState);
+        
+        // Clear internal state when coefficients or mode changes
+        if (stateChanged)
+        {
+            for (auto& f : filters)
+                f.reset();
+        }
+    }
 
-
-
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+    // In case we have more outputs than inputs
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+    // Make copies for dry/wet processing to avoid in-place conflicts
+    juce::AudioBuffer<float> dryBuffer;
+    dryBuffer.makeCopyOf(buffer);
+
+    juce::AudioBuffer<float> wetBuffer;
+    wetBuffer.makeCopyOf(buffer);
+
+    // Apply pre-distortion filter to wetBuffer if enabled
+    if (filterState == FilterState::preDistortion && coefficientsInitialized)
+    {
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            auto* channelData = wetBuffer.getWritePointer(channel);
+            juce::dsp::AudioBlock<float> block(wetBuffer, channel);
+            auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
+            filters[channel].process(ctx);
+        }
+    }
+
+    // Process distortion on wetBuffer
     for (int channel = 0; channel < numChannels; ++channel)
     {
-        auto* channelData = buffer.getWritePointer (channel);
+        auto* channelData = wetBuffer.getWritePointer (channel);
         
-        for (int i = 0; i < numSamples; ++i) {
-            
-            auto drySignal = channelData[i];
-            auto wetSignal = drySignal;
-            
+        for (int i = 0; i < numSamples; ++i)
+        {
+            auto wetSignal = channelData[i];
+
             wetSignal *= driveGain;
             wetSignal = processDistortion(wetSignal, distType);
-            
+
             float outputGain = 1.0f / driveGain;
             wetSignal *= outputGain;
-            
-            // Mix dry and wet signals based on mix parameter (0 = dry, 1 = wet)
-            channelData[i] = drySignal * (1.0f - mix) + wetSignal * mix;
+
+            channelData[i] = wetSignal;
         }
+    }
+
+    // Apply post-distortion filter to wetBuffer if enabled
+    if (filterState == FilterState::postDistortion && coefficientsInitialized)
+    {
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            auto* channelData = wetBuffer.getWritePointer(channel);
+            juce::dsp::AudioBlock<float> block(wetBuffer, channel);
+            auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
+            filters[channel].process(ctx);
+        }
+    }
+
+    // Mix dry and wet into the output buffer
+    for (int channel = 0; channel < numChannels; ++channel)
+    {
+        auto* out = buffer.getWritePointer(channel);
+        auto* dry = dryBuffer.getReadPointer(channel);
+        auto* wet = wetBuffer.getReadPointer(channel);
+
+        for (int i = 0; i < numSamples; ++i)
+            out[i] = dry[i] * (1.0f - mix) + wet[i] * mix;
     }
 }
 
@@ -272,4 +366,49 @@ void Distortion_pluginAudioProcessor::setStateInformation (const void* data, int
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new Distortion_pluginAudioProcessor();
+}
+
+void Distortion_pluginAudioProcessor::updateFilterCoefficients(float freq, float res, FilterType type, FilterState state)
+{
+    // Only update coefficients when filter is active (not off)
+    if (state == FilterState::off)
+    {
+        coefficientsInitialized = false;
+        prevFilterFreq = freq;
+        prevFilterRes = res;
+        prevFilterType = type;
+        prevFilterState = state;
+        return;
+    }
+
+    // Clamp resonance/Q to a safe range to avoid unstable coefficients
+    float q = juce::jlimit(0.1f, 10.0f, res);
+
+    // Ensure cutoff is below Nyquist
+    float nyquist = static_cast<float>(currentSampleRate * 0.5);
+    float cutoff = juce::jlimit(20.0f, nyquist * 0.999f, freq);
+
+    // Create the coefficient object and set it for all filters
+    if (type == FilterType::lowpass)
+    {
+        auto coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, cutoff, q);
+        for (auto& f : filters)
+            f.coefficients = coeffs;
+    }
+    else
+    {
+        auto coeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, cutoff, q);
+        for (auto& f : filters)
+            f.coefficients = coeffs;
+    }
+
+    // Reset internal filter state for all filters
+    for (auto& f : filters)
+        f.reset();
+
+    coefficientsInitialized = true;
+    prevFilterFreq = freq;
+    prevFilterRes = res;
+    prevFilterType = type;
+    prevFilterState = state;
 }

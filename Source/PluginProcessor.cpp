@@ -275,8 +275,8 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     {
         for (int channel = 0; channel < numChannels; ++channel)
         {
-            auto* channelData = wetBuffer.getWritePointer(channel);
-            juce::dsp::AudioBlock<float> block(wetBuffer, channel);
+            auto* channelPtr = wetBuffer.getWritePointer(channel);
+            juce::dsp::AudioBlock<float> block(&channelPtr, 1, numSamples);
             auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
             filters[channel].process(ctx);
         }
@@ -306,8 +306,8 @@ void Distortion_pluginAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     {
         for (int channel = 0; channel < numChannels; ++channel)
         {
-            auto* channelData = wetBuffer.getWritePointer(channel);
-            juce::dsp::AudioBlock<float> block(wetBuffer, channel);
+            auto* channelPtr = wetBuffer.getWritePointer(channel);
+            juce::dsp::AudioBlock<float> block(&channelPtr, 1, numSamples);
             auto ctx = juce::dsp::ProcessContextReplacing<float>(block);
             filters[channel].process(ctx);
         }

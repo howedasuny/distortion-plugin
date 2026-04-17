@@ -15,7 +15,7 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (800, 600);
+    setSize (500, 300);
     
     // Drive Slider
     driveSlider.setSliderStyle (juce::Slider::LinearBarVertical);
@@ -136,9 +136,9 @@ void Distortion_pluginAudioProcessorEditor::paint (juce::Graphics& g)
     
     // Filter section labels
     g.drawText ("Filter State", 180, 30, 150, 15, juce::Justification::centred);
-    g.drawText ("Filter Type", 180, 70, 150, 15, juce::Justification::centred);
-    g.drawText ("Frequency", 180, 120, 150, 15, juce::Justification::centred);
-    g.drawText ("Resonance (Q)", 180, 160, 150, 15, juce::Justification::centred);
+    g.drawText ("Filter Type", 180, 95, 150, 15, juce::Justification::centred);
+    g.drawText ("Frequency", 180, 145, 150, 15, juce::Justification::centred);
+    g.drawText ("Resonance (Q)", 180, 185, 150, 15, juce::Justification::centred);
 }
 
 void Distortion_pluginAudioProcessorEditor::resized()
@@ -153,7 +153,7 @@ void Distortion_pluginAudioProcessorEditor::resized()
     
     // Filter controls (right side)
     filterStateBox.setBounds(180, 50, 150, 30);
-    filterTypeBox.setBounds(180, 90, 150, 30);
-    filterFreqSlider.setBounds(180, 140, 300, 30);
-    filterResSlider.setBounds(180, 180, 300, 30);
+    filterTypeBox.setBounds(180, 115, 150, 30);
+    filterFreqSlider.setBounds(180, 165, 300, 30);
+    filterResSlider.setBounds(180, 205, 300, 30);
 }

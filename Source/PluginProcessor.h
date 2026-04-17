@@ -65,6 +65,7 @@ public:
         softClip,
         hardClip,
         cubic,
+        arctan,
     };
     
     enum class FilterState

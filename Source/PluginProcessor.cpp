@@ -215,6 +215,9 @@ float Distortion_pluginAudioProcessor::processDistortion(float x, DistortionType
     case DistortionType::cubic:
         return x * x * x;
 
+    case DistortionType::arctan:
+        return (2.0f / juce::MathConstants<float>::pi) * std::atan(x);
+
     default:
         return x;
     }

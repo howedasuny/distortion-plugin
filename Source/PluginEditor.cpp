@@ -15,7 +15,7 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (500, 300);
+    setSize (425, 275);
     
     // Drive Slider
     driveSlider.setSliderStyle (juce::Slider::LinearBarVertical);
@@ -34,10 +34,12 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
     mixSlider.setValue (1.0);
     
     // Distortion Type Box
-    distTypeBox.addItem("Tanh", 1);
+    distTypeBox.addItem("Tube", 1);
     distTypeBox.addItem("Soft Clip", 2);
     distTypeBox.addItem("Hard Clip", 3);
     distTypeBox.addItem("Cubic", 4);
+    distTypeBox.addItem("Tape", 5);
+    distTypeBox.setSelectedItemIndex(0);
     
     // Filter State Box
     filterStateBox.addItem("Off", 1);
@@ -130,15 +132,15 @@ void Distortion_pluginAudioProcessorEditor::paint (juce::Graphics& g)
     
     // Distortion section labels
     g.setFont (juce::FontOptions (12.0f));
-    g.drawText ("Drive", 40, 30, 30, 20, juce::Justification::centred);
-    g.drawText ("Mix", 80, 30, 30, 20, juce::Justification::centred);
+    g.drawText ("Drive", 35, 30, 30, 20, juce::Justification::centred);
+    g.drawText ("Mix", 75, 30, 30, 20, juce::Justification::centred);
     g.drawText ("Distortion Type", 30, 205, 120, 15, juce::Justification::centred);
     
     // Filter section labels
     g.drawText ("Filter State", 180, 30, 150, 15, juce::Justification::centred);
     g.drawText ("Filter Type", 180, 95, 150, 15, juce::Justification::centred);
-    g.drawText ("Frequency", 180, 145, 150, 15, juce::Justification::centred);
-    g.drawText ("Resonance (Q)", 180, 185, 150, 15, juce::Justification::centred);
+    g.drawText ("Frequency", 180, 155, 150, 15, juce::Justification::centred);
+    g.drawText ("Resonance (Q)", 180, 195, 150, 15, juce::Justification::centred);
 }
 
 void Distortion_pluginAudioProcessorEditor::resized()

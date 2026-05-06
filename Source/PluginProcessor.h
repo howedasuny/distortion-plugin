@@ -61,11 +61,11 @@ public:
     //==============================================================================
     enum class DistortionType
     {
-        tanh = 0,
+        tube = 0,
         softClip,
         hardClip,
         cubic,
-        arctan,
+        tape,
     };
     
     enum class FilterState

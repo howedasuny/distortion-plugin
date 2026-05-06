@@ -15,23 +15,23 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (425, 275);
+    setSize(425, 275);
     
     // Drive Slider
-    driveSlider.setSliderStyle (juce::Slider::LinearBarVertical);
-    driveSlider.setRange (0.0, 127.0, 1.0);
-    driveSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
-    driveSlider.setPopupDisplayEnabled (true, false, this);
-    driveSlider.setTextValueSuffix ("Drive");
-    driveSlider.setValue (1.0);
+    driveSlider.setSliderStyle(juce::Slider::LinearBarVertical);
+    driveSlider.setRange(0.0, 127.0, 1.0);
+    driveSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 90, 0);
+    driveSlider.setPopupDisplayEnabled(true, false, this);
+    driveSlider.setTextValueSuffix(" Drive");
+    driveSlider.setValue(1.0);
     
     // Mix Slider
-    mixSlider.setSliderStyle (juce::Slider::LinearBarVertical);
-    mixSlider.setRange (0.0, 1.0, 0.01f);
-    mixSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
-    mixSlider.setPopupDisplayEnabled (true, false, this);
-    mixSlider.setTextValueSuffix ("Mix");
-    mixSlider.setValue (1.0);
+    mixSlider.setSliderStyle(juce::Slider::LinearBarVertical);
+    mixSlider.setRange(0.0, 1.0, 0.01f);
+    mixSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 90, 0);
+    mixSlider.setPopupDisplayEnabled(true, false, this);
+    mixSlider.setTextValueSuffix("%");
+    mixSlider.setValue(1.0);
     
     // Distortion Type Box
     distTypeBox.addItem("Tube", 1);
@@ -53,21 +53,21 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
     filterTypeBox.setSelectedItemIndex(0);
     
     // Filter Frequency Slider
-    filterFreqSlider.setSliderStyle (juce::Slider::LinearHorizontal);
-    filterFreqSlider.setRange (20.0, 20000.0, 1.0);
-    filterFreqSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 80, 0);
-    filterFreqSlider.setPopupDisplayEnabled (true, false, this);
-    filterFreqSlider.setTextValueSuffix (" Hz");
-    filterFreqSlider.setValue (1000.0);
+    filterFreqSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    filterFreqSlider.setRange(20.0, 20000.0, 1.0);
+    filterFreqSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 80, 0);
+    filterFreqSlider.setPopupDisplayEnabled(true, false, this);
+    filterFreqSlider.setTextValueSuffix(" Hz");
+    filterFreqSlider.setValue(1000.0);
     filterFreqSlider.setSkewFactorFromMidPoint(1000.0);
     
     // Filter Resonance Slider
-    filterResSlider.setSliderStyle (juce::Slider::LinearHorizontal);
-    filterResSlider.setRange (0.1, 10.0, 0.01f);
-    filterResSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 80, 0);
-    filterResSlider.setPopupDisplayEnabled (true, false, this);
-    filterResSlider.setTextValueSuffix (" Q");
-    filterResSlider.setValue (1.0);
+    filterResSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    filterResSlider.setRange(0.1, 10.0, 0.01f);
+    filterResSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 80, 0);
+    filterResSlider.setPopupDisplayEnabled(true, false, this);
+    filterResSlider.setTextValueSuffix(" Q");
+    filterResSlider.setValue(1.0);
     
     // Add components
     addAndMakeVisible(&driveSlider);
@@ -114,6 +114,15 @@ Distortion_pluginAudioProcessorEditor::Distortion_pluginAudioProcessorEditor (Di
         "filterRes",
         filterResSlider);
 
+    // Format mix slider to show percentage
+    mixSlider.textFromValueFunction = [](double value) {
+        auto mixPercent = jmap(value, 0.0, 1.0, 0.0, 100.0);
+        return juce::String(mixPercent);
+    };
+    mixSlider.valueFromTextFunction = [](const String &text) {
+        double mixValue = text.getDoubleValue();
+        return jmap(mixValue, 0.0, 100.0, 0.0, 1.0);
+    };
 }
 
 Distortion_pluginAudioProcessorEditor::~Distortion_pluginAudioProcessorEditor()
@@ -124,23 +133,23 @@ Distortion_pluginAudioProcessorEditor::~Distortion_pluginAudioProcessorEditor()
 void Distortion_pluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (juce::Colours::white);
+    g.fillAll(juce::Colours::white);
 
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (15.0f));
-    g.drawFittedText ("Distortion Plugin", 0, 0, getWidth(), 30, juce::Justification::centred, 1);
+    g.setColour(juce::Colours::black);
+    g.setFont(juce::FontOptions (15.0f));
+    g.drawFittedText("Distortion Plugin", 0, 0, getWidth(), 30, juce::Justification::centred, 1);
     
     // Distortion section labels
-    g.setFont (juce::FontOptions (12.0f));
-    g.drawText ("Drive", 35, 30, 30, 20, juce::Justification::centred);
-    g.drawText ("Mix", 75, 30, 30, 20, juce::Justification::centred);
-    g.drawText ("Distortion Type", 30, 205, 120, 15, juce::Justification::centred);
+    g.setFont(juce::FontOptions (12.0f));
+    g.drawText("Drive", 35, 30, 30, 20, juce::Justification::centred);
+    g.drawText("Mix", 75, 30, 30, 20, juce::Justification::centred);
+    g.drawText("Distortion Type", 30, 205, 120, 15, juce::Justification::centred);
     
     // Filter section labels
-    g.drawText ("Filter State", 180, 30, 150, 15, juce::Justification::centred);
-    g.drawText ("Filter Type", 180, 95, 150, 15, juce::Justification::centred);
-    g.drawText ("Frequency", 180, 155, 150, 15, juce::Justification::centred);
-    g.drawText ("Resonance (Q)", 180, 195, 150, 15, juce::Justification::centred);
+    g.drawText("Filter State", 180, 30, 150, 15, juce::Justification::centred);
+    g.drawText("Filter Type", 180, 95, 150, 15, juce::Justification::centred);
+    g.drawText("Frequency", 180, 155, 150, 15, juce::Justification::centred);
+    g.drawText("Resonance (Q)", 180, 195, 150, 15, juce::Justification::centred);
 }
 
 void Distortion_pluginAudioProcessorEditor::resized()

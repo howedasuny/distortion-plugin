@@ -168,7 +168,7 @@ Distortion_pluginAudioProcessor::createParameters()
     params.push_back(std::make_unique<juce::AudioParameterChoice>(
         "distType",
         "Distortion Type",
-        juce::StringArray{"Tanh", "Soft Clip", "Hard Clip", "Cubic"},
+        juce::StringArray{"Tube", "Soft Clip", "Hard Clip", "Cubic", "Tape"},
         0));
 
     // Filter parameters
@@ -203,7 +203,7 @@ float Distortion_pluginAudioProcessor::processDistortion(float x, DistortionType
 {
     switch (type)
     {
-    case DistortionType::tanh:
+    case DistortionType::tube:
         return std::tanh(x);
 
     case DistortionType::softClip:
@@ -215,7 +215,7 @@ float Distortion_pluginAudioProcessor::processDistortion(float x, DistortionType
     case DistortionType::cubic:
         return x * x * x;
 
-    case DistortionType::arctan:
+    case DistortionType::tape:
         return (2.0f / juce::MathConstants<float>::pi) * std::atan(x);
 
     default:

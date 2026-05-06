@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="sGRbir" name="DSTPlugin" projectType="audioplug" jucerFormatVersion="1"
-              pluginFormats="buildVST3" pluginVST3Category="Distortion,Fx">
+              pluginFormats="buildVST3" pluginVST3Category="Distortion,Fx"
+              pluginName="Deron's Distortion Plugin" pluginDesc="A basic distortion plugin built using the JUCE framework. "
+              companyName="Deron Howe" companyWebsite="https://github.com/howedasuny">
   <MAINGROUP id="JUJzEZ" name="DSTPlugin">
     <GROUP id="{AC6F595C-D019-143C-BB6D-2C89B4290D90}" name="Source">
       <FILE id="G8X3LG" name="PluginProcessor.cpp" compile="1" resource="0"
